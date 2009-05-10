@@ -4,6 +4,7 @@ use strict;
 use CPANPLUS::Error;
 use CPANPLUS::Internals::Constants;
 
+use Cwd                         qw[abs_path];
 use IPC::Cmd                    qw[can_run];
 use File::Spec;
 use Locale::Maketext::Simple    Class => 'CPANPLUS', Style => 'gettext';
@@ -260,8 +261,23 @@ use constant DEB_DEBHELPER      => 'debhelper (>= 4.0.2)';
 ### by perl, unless you explicilty undefined 'inc_version_list' as a config
 ### argument
 use constant DEB_THIS_PERL_DEPENDS
-                                => sub { use Config; 
-                                         "perl (>= $Config{version})" };
+                                => IS_SYSTEM_PERL
+                                   ? sub { use Config;
+                                         "perl (>= $Config{version})" }
+                                   : do {
+                                       my $pid = open my($fh), '-|', 'dpkg', '-S', abs_path( $^X );
+                                       my ( $pkg ) = <$fh>;
+                                       close $fh;
+                                       waitpid $pid, 0;
+                                       if ( defined $pkg && $pkg =~ /^(\S+):/ ) {
+                                           $pkg = $1;
+                                           sub { "$pkg (>= $Config{version})" };
+                                       }
+                                       else {
+                                           warn "Can't find debian package for $^X";
+                                           sub { "" };
+                                       }
+                                     };
 use constant DEB_PERL_DEPENDS   => join ', ',
                                    ( IS_SYSTEM_PERL ? '${perl:Depends}' : () ),
                                    '${misc:Depends}',

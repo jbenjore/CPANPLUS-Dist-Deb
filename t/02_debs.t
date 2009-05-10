@@ -15,21 +15,31 @@ use_ok( $DIST );
 use_ok( $CLASS );
 use_ok( $CONST );
 
-my $map = {
-    MM      => [qw|xs noxs|],
-    Build   => [qw|xs noxs|],
-};    
+my @BUILDERS = qw( MM Build );
+my @TYPE     = qw( xs noxs );
 
 ### run only one particular combination
+my @TESTS;
 if( @ARGV ) {
-    my @parts = split '/', $ARGV[0];
-    $map = {};
-    $map->{ $parts[0] } = [ $parts[1] ];
+    @TESTS =
+        map {
+            my ( $builder, $type ) = split m{/};
+            [ $builder, $type ];
+        }
+            @ARGV;
+} else {
+    @TESTS =
+        map {
+            my $builder = $_;
+            map [ $builder, $_ ],
+                @TYPE;
+        }
+            @BUILDERS;
 }    
 
 ### create a debian dist using EU::MM and no XS files
-{   for my $type ( keys %$map ) {
-        for my $dir ( @{ $map->{$type} } ) {
+for my $test ( @TESTS ) {
+    my ( $type, $dir ) = @$test;
 
             diag("Taking care of $type / $dir");
 
@@ -163,7 +173,7 @@ if( @ARGV ) {
             }
 
             ### see if we can write some package files
-            {   if ( $DO_META ) {
+    if ( $DO_META ) {
                     ok( $DO_META,           "Testing meta files" );
             
                     for my $type (qw[sources packages]) {
@@ -179,9 +189,6 @@ if( @ARGV ) {
                         ok( !-e $loc,       "   File got deleted" );  
                     }
                 }
-            }
-        }    
-    }
 
     # Moar st00pit vms
     1 while unlink $deb;

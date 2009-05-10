@@ -1,0 +1,76 @@
+From 8231a1f44889c1914aa4c2474803b37c51de2bec Mon Sep 17 00:00:00 2001
+From: Josh ben Jore <jbenjore@whitepages.com>
+Date: Sun, 10 May 2009 00:27:12 -0700
+Subject: [PATCH] Run EU::MM/MB, xs/non-XS tests in predictable order
+
+---
+ t/02_debs.t |   33 ++++++++++++++++++++-------------
+ 1 files changed, 20 insertions(+), 13 deletions(-)
+
+diff --git a/t/02_debs.t b/t/02_debs.t
+index d00617d..27a8d70 100755
+--- a/t/02_debs.t
++++ b/t/02_debs.t
+@@ -15,21 +15,31 @@ use_ok( $DIST );
+ use_ok( $CLASS );
+ use_ok( $CONST );
+ 
+-my $map = {
+-    MM      => [qw|xs noxs|],
+-    Build   => [qw|xs noxs|],
+-};    
++my @BUILDERS = qw( MM Build );
++my @TYPE     = qw( xs noxs );
+ 
+ ### run only one particular combination
++my @TESTS;
+ if( @ARGV ) {
+-    my @parts = split '/', $ARGV[0];
+-    $map = {};
+-    $map->{ $parts[0] } = [ $parts[1] ];
++    @TESTS =
++        map {
++            my ( $builder, $type ) = split m{/};
++            [ $builder, $type ];
++        }
++            @ARGV;
++} else {
++    @TESTS =
++        map {
++            my $builder = $_;
++            map [ $builder, $_ ],
++                @TYPE;
++        }
++            @BUILDERS;
+ }    
+ 
+ ### create a debian dist using EU::MM and no XS files
+-{   for my $type ( keys %$map ) {
+-        for my $dir ( @{ $map->{$type} } ) {
++for my $test ( @TESTS ) {
++    my ( $type, $dir ) = @$test;
+ 
+             diag("Taking care of $type / $dir");
+ 
+@@ -163,7 +173,7 @@ if( @ARGV ) {
+             }
+ 
+             ### see if we can write some package files
+-            {   if ( $DO_META ) {
++    if ( $DO_META ) {
+                     ok( $DO_META,           "Testing meta files" );
+             
+                     for my $type (qw[sources packages]) {
+@@ -179,9 +189,6 @@ if( @ARGV ) {
+                         ok( !-e $loc,       "   File got deleted" );  
+                     }
+                 }
+-            }
+-        }    
+-    }
+ 
+     # Moar st00pit vms
+     1 while unlink $deb;
+-- 
+1.6.0.4
+

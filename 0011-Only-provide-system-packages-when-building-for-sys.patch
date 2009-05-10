@@ -1,0 +1,50 @@
+From f5c70ac069b83bd15467b5327b1936a9038c7613 Mon Sep 17 00:00:00 2001
+From: Josh ben Jore <jbenjore@whitepages.com>
+Date: Sun, 10 May 2009 00:06:28 -0700
+Subject: [PATCH] Only "provide" system packages when building for system perl
+
+---
+ lib/CPANPLUS/Dist/Deb.pm |    4 +++-
+ t/02_debs.t              |    9 +++++++++
+ 2 files changed, 12 insertions(+), 1 deletions(-)
+
+diff --git a/lib/CPANPLUS/Dist/Deb.pm b/lib/CPANPLUS/Dist/Deb.pm
+index 93399b5..6897c90 100755
+--- a/lib/CPANPLUS/Dist/Deb.pm
++++ b/lib/CPANPLUS/Dist/Deb.pm
+@@ -655,7 +655,9 @@ EOF
+ 
+         ### so we have a prefix? best explain what package we are /actually/
+         ### providing. Also note the Conflicts
+-        $contents .= "Provides: " . DEB_PACKAGE_NAME->($self) . "\n" if $prefix;
++        if ( IS_SYSTEM_PERL && $prefix ) {
++            $contents .= "Provides: " . DEB_PACKAGE_NAME->($self) . "\n";
++        }
+          
+         ### XXX remove 'Conflicts:' -- versioned provides don't work
+         ### with dpkg :( so if someone wants 'libfoo-perl > 2.0' it
+diff --git a/t/02_debs.t b/t/02_debs.t
+index 2b685bd..eb4c265 100755
+--- a/t/02_debs.t
++++ b/t/02_debs.t
+@@ -71,8 +71,17 @@ if( @ARGV ) {
+                                             "       Package: ok" );   
+                 like( $out, qr/Section: perl/,
+                                             "       Section: ok" );
++
++        # Dawg, this is contradictory. If we are system perl, we must Provide system libs.
++        # If we are not system perl, we must *not* provide system libs.
++        if ( CPANPLUS::Dist::Deb::Constants::IS_SYSTEM_PERL ) {
+                 like( $out, qr/Provides: $DEBMOD/,
+                                             "       Provides: ok" );
++        } else {
++            unlike( $out, qr/Provides: $DEBMOD/,
++                    "       Provides: ok" );
++        }
++
+                 unlike( $out, qr/Replaces: $DEBMOD/,
+                                             "       Replaces: not mentioned" );
+                 like( $out, qr/Description: $name/,
+-- 
+1.6.0.4
+

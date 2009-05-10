@@ -1,0 +1,25 @@
+From d9636ac180a8d5721cb1ba59e37a89b8a86f99ae Mon Sep 17 00:00:00 2001
+From: Josh ben Jore <jbenjore@whitepages.com>
+Date: Sat, 9 May 2009 22:15:00 -0700
+Subject: [PATCH] Core modules don't depend on anything bug core
+
+---
+ lib/CPANPLUS/Dist/Deb.pm |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/lib/CPANPLUS/Dist/Deb.pm b/lib/CPANPLUS/Dist/Deb.pm
+index ad18f5b..cc4eab5 100755
+--- a/lib/CPANPLUS/Dist/Deb.pm
++++ b/lib/CPANPLUS/Dist/Deb.pm
+@@ -583,7 +583,7 @@ sub prepare {
+                                 ### and we shouldn't list the same
+                                 ### prereq twice. Note that 2 modules
+                                 ### may be in 1 package
+-                                !$_->[0]->package_is_perl_core and
++                                !$_->[0]->module_is_supplied_with_perl_core and
+                                 !$seen{ DEB_PACKAGE_NAME->( $_->[0] ) }++
+                             } @depends;
+ 
+-- 
+1.6.0.4
+

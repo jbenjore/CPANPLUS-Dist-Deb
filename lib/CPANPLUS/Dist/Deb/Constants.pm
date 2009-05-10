@@ -401,10 +401,10 @@ install-stamp: build-stamp
 	dh_testroot
 	dh_clean -d -k
 
-	$(MAKE) install DESTDIR=$(TMP) PREFIX=/usr
+	$(MAKE) install DESTDIR=$(TMP) PREFIX=] . $Config{prefix} . q[
 	@find . -type f | grep '/perllocal.pod$$' | xargs rm -f
 
-	dh_movefiles /usr
+	dh_movefiles ] . $Config{prefix} . q[
 
 	touch install-stamp
 
@@ -497,10 +497,10 @@ install-stamp:
 	dh_testroot
 	dh_clean -d -k
 
-	$(MAKE) install DESTDIR=$(TMP) PREFIX=/usr
+	$(MAKE) install DESTDIR=$(TMP) PREFIX=] . $Config{prefix} . q[
 	-find . -type f | grep '/perllocal.pod$$' | xargs rm -f
 	
-	dh_movefiles /usr
+	dh_movefiles ] . $Config{prefix} . q[
 
 	touch install-stamp
 
@@ -600,7 +600,7 @@ install-stamp: build-stamp
 	# remove it for now
 	-find . -type f | grep '/.packlist$$' | xargs rm -f
 	
-	dh_movefiles /usr
+	dh_movefiles ] . $Config{prefix} . q[
 
 	touch install-stamp
 
@@ -701,7 +701,7 @@ install-stamp:
 	# remove it for now
 	-find . -type f | grep '/.packlist$$' | xargs rm -f
 
-	dh_movefiles /usr
+	dh_movefiles ] . $Config{prefix} . q[
 
 	touch install-stamp
 

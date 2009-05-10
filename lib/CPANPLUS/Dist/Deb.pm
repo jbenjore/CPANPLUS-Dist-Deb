@@ -288,8 +288,9 @@ sub prepare {
 
     my $args;
     my( $verbose,$force,$perl,$prereq_target,$distdir,$copyright,$prefix,
-        $keep_source,$distribution, $deb_version,$prereq_build);
+        $keep_source,$distribution, $deb_version,$prereq_build,@replaces);
     {   local $Params::Check::ALLOW_UNKNOWN = 1;
+        my $replaces_in = '';
         my $tmpl = {
             verbose     => { default => $conf->get_conf('verbose'),
                                 store => \$verbose },
@@ -309,9 +310,12 @@ sub prepare {
                                   store => \$deb_version },                                  
             #keep_source     => { default => 0, store => \$keep_source },
             prereq_build    => { default => 0, store => \$prereq_build },
+            replaces        => { default => '', store => \$replaces_in },
         };
 
         $args = check( $tmpl, \%hash ) or return;
+
+        @replaces = split /\s*,+\s*/, $replaces_in;
     }
 
     ### store the prefix for later use
@@ -627,24 +631,21 @@ EOF
         ### - replace perl core if we were ever part of it
         ### - replaces 'standard' debian module (that may or may not exist)
         ###     if we are built without a prefix
-        ### XXX OBSOLETE! since we install completely paralel to existing
-        ### moduels, and dont replace any files, Replaces: is no longer
-        ### required
-#         if ( $self->module_is_supplied_with_perl_core or not $prefix ) {
-#             my @printme;
-#             
-#             $fh->print('Replaces: ');
-#             
-#             ### so this module is also in perl core, add a rule telling the
-#             ### .deb that it's ok to replace stuff from those packages.
-#             push @printme, DEB_REPLACE_PERL_CORE
-#                 if $self->module_is_supplied_with_perl_core;
-# 
-#             push @printme, DEB_PACKAGE_NAME->($self) if $prefix;
-# 
-#             $fh->print( join(', ', @printme), "\n" );
-#         }
-        
+        if ( ! IS_SYSTEM_PERL && $self->module_is_supplied_with_perl_core ) {
+            ### so this module is also in perl core, add a rule telling the
+            ### .deb that it's ok to replace stuff from those packages.
+            push @replaces, DEB_REPLACE_PERL_CORE;
+            push @replaces, DEB_PACKAGE_NAME->($self) if $prefix;
+        }
+
+        if ( @replaces ) {
+            # Unique.
+            my %seen;
+            @replaces = grep { ! $seen{$_}++ } @replaces;
+
+            $contents .= 'Replaces: ' . join( ', ', sort @replaces ) . "\n";
+        }
+
         ### so we have a prefix? best explain what package we are /actually/
         ### providing. Also note the Conflicts
         $contents .= "Provides: " . DEB_PACKAGE_NAME->($self) . "\n" if $prefix;

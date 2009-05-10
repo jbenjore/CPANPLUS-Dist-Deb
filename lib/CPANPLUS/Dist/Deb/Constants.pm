@@ -15,6 +15,8 @@ use Package::Constants;
 $VERSION    = '0.01';
 @EXPORT     =  Package::Constants->list( __PACKAGE__ );
 
+use constant IS_SYSTEM_PERL     => '/usr/bin/perl' eq $^X;
+
 use constant DEB_BASE_DIR       => sub { my $conf = shift or return;
                                          my $perl = shift || $^X;
                                          require CPANPLUS::Internals::Utils;

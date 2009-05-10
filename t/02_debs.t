@@ -182,4 +182,8 @@ if( @ARGV ) {
             }
         }    
     }
+
+    # Moar st00pit vms
+    1 while unlink $deb;
+    ok( !-e $deb, "'$deb' got deleted" );
 }

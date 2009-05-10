@@ -39,14 +39,14 @@ if( @ARGV ) {
 
 ### create a debian dist using EU::MM and no XS files
 for my $test ( @TESTS ) {
-    my ( $type, $dir ) = @$test;
+    my ( $builder, $type ) = @$test;
 
-            diag("Taking care of $type / $dir");
+            diag("Taking care of $builder / $type");
 
             my $mod     = $FAKEMOD->clone;
             my $name    = $mod->module;
             my $distdir = File::Spec->rel2abs(
-                            File::Spec->catdir( 'src', $type, $dir )
+                            File::Spec->catdir( 'src', $builder, $type)
                           );
             
             ### point it to your dummy dir
@@ -102,7 +102,7 @@ for my $test ( @TESTS ) {
             
             ### check out the --contents on the file
             {   my $out = join '', `$DPKG --contents $deb`;
-                my ($need,$omit) = @{$CONTENTS->{$dir}};
+                my ($need,$omit) = @{$CONTENTS->{$type}};
                 
                 ok( $out,                   "   Deb --contents retrieved" );
 
@@ -118,7 +118,7 @@ for my $test ( @TESTS ) {
            
             ### install tests
             SKIP: {
-                my ($need) = @{$CONTENTS->{$dir}};
+                my ($need) = @{$CONTENTS->{$type}};
                 my $to_skip = 3 + 2 * scalar @$need;
                 
                 skip "Can not (un)install -- no superuser privileges", 
@@ -158,7 +158,7 @@ for my $test ( @TESTS ) {
             ### check out the naming
             like( $deb, qr/$DEBMOD/,        "   Deb is called '$DEBMOD'" );
             
-            if( $dir eq 'xs' ) {
+            if ( $type eq 'xs' ) {
                 my $arch = DEB_ARCHITECTURE->()->();
                 like( $deb, qr/$arch/,      "       Arch dependant ($arch)" );
             } else {     

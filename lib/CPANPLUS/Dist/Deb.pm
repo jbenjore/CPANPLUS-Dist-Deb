@@ -655,7 +655,9 @@ EOF
 
         ### so we have a prefix? best explain what package we are /actually/
         ### providing. Also note the Conflicts
-        $contents .= "Provides: " . DEB_PACKAGE_NAME->($self) . "\n" if $prefix;
+        if ( IS_SYSTEM_PERL && $prefix ) {
+            $contents .= "Provides: " . DEB_PACKAGE_NAME->($self) . "\n";
+        }
          
         ### XXX remove 'Conflicts:' -- versioned provides don't work
         ### with dpkg :( so if someone wants 'libfoo-perl > 2.0' it

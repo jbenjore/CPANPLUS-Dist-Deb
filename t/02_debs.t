@@ -71,8 +71,17 @@ if( @ARGV ) {
                                             "       Package: ok" );   
                 like( $out, qr/Section: perl/,
                                             "       Section: ok" );
+
+        # Dawg, this is contradictory. If we are system perl, we must Provide system libs.
+        # If we are not system perl, we must *not* provide system libs.
+        if ( CPANPLUS::Dist::Deb::Constants::IS_SYSTEM_PERL ) {
                 like( $out, qr/Provides: $DEBMOD/,
                                             "       Provides: ok" );
+        } else {
+            unlike( $out, qr/Provides: $DEBMOD/,
+                    "       Provides: ok" );
+        }
+
                 unlike( $out, qr/Replaces: $DEBMOD/,
                                             "       Replaces: not mentioned" );
                 like( $out, qr/Description: $name/,

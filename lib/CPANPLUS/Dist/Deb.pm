@@ -896,11 +896,11 @@ sub create {
         }
 
         my $buffer;
-        unless( scalar run(
-                    command => [$prog, qw|-rfakeroot -uc -us -d|,
-                                DEB_DPKG_SOURCE_IGNORE],
-                    verbose => $verbose,
-                    buffer  => \$buffer )
+        unless( scalar env_safe_run(
+                                    command => [$prog, qw|-rfakeroot -uc -us -d|,
+                                                DEB_DPKG_SOURCE_IGNORE],
+                                    verbose => $verbose,
+                                    buffer  => \$buffer )
         ) {
             error( loc( "Failed to create debian package for '%1': '%2'",
                         $self->module, $buffer ) );
@@ -1027,9 +1027,9 @@ sub install {
     unshift @cmd, $sudo if $sudo;
 
     my $buffer;
-    unless( scalar run( command => \@cmd,
-                        verbose => $verbose,
-                        buffer  => \$buffer )
+    unless( scalar env_safe_run( command => \@cmd,
+                                 verbose => $verbose,
+                                 buffer  => \$buffer )
     ) {
         error( loc( "Unable to install '%1': %2",
                     $dist->status->package, $buffer ) );
@@ -1083,10 +1083,10 @@ sub uninstall {
     unshift @cmd, $sudo if $sudo;
 
     my $buffer;
-    unless( scalar run( command => \@cmd,
-                        verbose => $verbose,
-                        buffer  => \$buffer )
-    ) {
+    unless( scalar env_safe_run( command => \@cmd,
+                                 verbose => $verbose,
+                                 buffer  => \$buffer )
+          ) {
         error( loc( "Unable to uninstall '%1': %2",
                     $dist->status->package, $buffer ) );
         return $dist->status->uninstalled(0);
@@ -1181,6 +1181,19 @@ It returns the location of the metafile on success, and false on failure.
     
         return $outputfile;
     }
+}
+
+# Protects dpkg-* programs using /usr/bin/perl from things like our non-system
+# PERL5LIB and such. I found that when building for 5.10.0, environment between
+# the two interpreters would leak and I'd break the core dpkg tool set.
+#
+sub env_safe_run {
+    local %ENV =
+        map {; $_ => $ENV{$_} }
+        grep { ! POISONOUS_ENV->( $_ ) }
+        keys %ENV;
+
+    return run( @_ );
 }
 
 

@@ -30,6 +30,54 @@ use constant DEB_BASE_DIR       => sub { my $conf = shift or return;
                                         );
                                 };      
 
+# This list is constructed with `perldoc -t perlrun | perl -lne 'print
+# for /\b(PERL\w+)/g'|sort|uniq`. This exists so environment variables
+# like PERL5LIB for *your* perl won't leak through to the system perl.
+#
+# I found when I was building for my non-threaded
+# /opt/perl-5.10.0/bin/perl, it needed dpkg services but they're
+# written against the threaded 5.8 /usr/bin/perl it triggered problems
+# because the two perls would start to see each other.
+#
+# Bummer. So now run() calls for non-system perl try to strip out
+# environment that might inappropriately tie the two together. I think
+# it's ok to keep your current environment if you're just building for
+# the system perl.
+#
+# Further, this list isn't just as dumb as "anything that starts with
+# PERL" because that excludes PERL_MM_* but I desire to set those.
+use constant POISONOUS_ENV_NAMES => { IS_SYSTEM_PERL
+                                      ? ()
+                                      : (
+                                         map {; $_ => undef }
+                                         qw(
+                                               PERL5DB
+                                               PERL5DB_THREADED
+                                               PERL5LIB
+                                               PERL5OPT
+                                               PERL5SHELL
+                                               PERLDB_OPTS
+                                               PERLIO
+                                               PERLIO_DEBUG
+                                               PERLLIB
+                                               PERLSHR
+                                               PERL_ALLOW_NON_IFS_LSP
+                                               PERL_API
+                                               PERL_API_
+                                               PERL_DEBUG_MSTATS
+                                               PERL_DESTRUCT_LEVEL
+                                               PERL_DL_NONLAZY
+                                               PERL_ENCODING
+                                               PERL_ENV_TABLES
+                                               PERL_HASH_SEED
+                                               PERL_HASH_SEED_DEBUG
+                                               PERL_ROOT
+                                               PERL_SIGNALS
+                                               PERL_UNICODE
+                                          ) ) };
+
+use constant POISONOUS_ENV => sub { exists POISONOUS_ENV_NAMES->{ $_[0] } };
+
 use constant DEB_DEBIAN_DIR     => sub { File::Spec->catfile( @_,
                                             'debian' )
                                 };

@@ -191,11 +191,11 @@ use constant DEB_BIN_BUILDPACKAGE
                                         return $p;
                                 };
 
-                                ### leave out all .a and .so files
+                                ### leave out all .a and .so and ._ files
                                 ### all properly shell escaped ;(
 use constant DEB_DPKG_SOURCE_IGNORE
                                 #=> '-i\(\?i:.\*.\(\?:so\|a\$\)\)';
-                                => '-i.s?[oa]';
+                                => '-i.s?[_oa]';
 
 use constant DEB_PACKAGE_NAME   => sub {my $mod = shift or return;
                                         my $pre = shift || '';
@@ -233,10 +233,18 @@ use constant DEB_DEFAULT_PACKAGE_VERSION
                                 => 1;
                                 
 use constant DEB_VERSION        => sub {my $mod = shift or return;
-                                        my $ver = shift || 
+                                        my $debver = shift || 
                                                   DEB_DEFAULT_PACKAGE_VERSION;
-                                        return $mod->package_version . 
-                                                '-' . $ver;
+                                        my $modver = $mod->package_version;
+
+                                        ### XXX _ is an illegal char in versions,
+                                        ### so translate them to dots. If we would
+                                        ### just strip it, 0.11_01 would become
+                                        ### 0.1101 which is > 0.12 in debian
+                                        ### version comparison. otoh, 0.11.01 < 0.12
+                                        $modver =~ s/_/./g;
+
+                                        return $modver. '-' . $debver;
                                 };
 use constant DEB_RULES_ARCH     => sub { return shift() ? 'any' : 'all'; };
 use constant DEB_DEB_FILE_NAME  => sub {my $mod = shift() or return;
@@ -433,7 +441,7 @@ use constant DEB_RULES_MM_NOXS_CONTENT  =>
                                 ### thing here....
                                 my $bindir  = DEB_INSTALL_SITEBIN->($loc);
                                     
-                                return q[#!/usr/bin/make -f
+                                return qq[#!/usr/bin/make -f
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
@@ -441,13 +449,13 @@ use constant DEB_RULES_MM_NOXS_CONTENT  =>
 # always return the default without waiting for user input.
 export PERL_MM_USE_DEFAULT=1
 
-PACKAGE=$(shell dh_listpackages)
+PACKAGE=\$(shell dh_listpackages)
 
 ifndef PERL
-PERL = /usr/bin/perl
+PERL = $^X
 endif
 
-TMP	=$(CURDIR)/debian/tmp
+TMP	=\$(CURDIR)/debian/tmp
 
 
 build: build-stamp
@@ -469,10 +477,10 @@ install-stamp: build-stamp
 	dh_testroot
 	dh_clean -d -k
 
-	$(MAKE) install DESTDIR=$(TMP) PREFIX=] . $Config{prefix} . q[
-	@find . -type f | grep '/perllocal.pod$$' | xargs rm -f
+	\$(MAKE) install DESTDIR=\$(TMP) PREFIX=$Config{prefix}
+	\@find . -type f | grep '/perllocal.pod\$\$' | xargs rm -f
 
-	dh_movefiles ] . $Config{prefix} . q[
+	dh_movefiles $Config{prefix}
 
 	touch install-stamp
 
@@ -530,7 +538,7 @@ use constant DEB_RULES_MM_XS_CONTENT
                                 ### thing here....
                                 my $bindir  = DEB_INSTALL_SITEBIN->($loc);
                                         
-                                    return q[#!/usr/bin/make -f
+                                    return qq[#!/usr/bin/make -f
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
@@ -538,13 +546,13 @@ use constant DEB_RULES_MM_XS_CONTENT
 # always return the default without waiting for user input.
 export PERL_MM_USE_DEFAULT=1
 
-PACKAGE=$(shell dh_listpackages)
+PACKAGE=\$(shell dh_listpackages)
 
 ifndef PERL
-PERL = /usr/bin/perl
+PERL = $^X
 endif
 
-TMP	=$(CURDIR)/debian/tmp
+TMP	=\$(CURDIR)/debian/tmp
 
 build: build-stamp
 build-stamp:
@@ -565,10 +573,10 @@ install-stamp:
 	dh_testroot
 	dh_clean -d -k
 
-	$(MAKE) install DESTDIR=$(TMP) PREFIX=] . $Config{prefix} . q[
-	-find . -type f | grep '/perllocal.pod$$' | xargs rm -f
+	\$(MAKE) install DESTDIR=\$(TMP) PREFIX=$Config{prefix}
+	-find . -type f | grep '/perllocal.pod\$\$' | xargs rm -f
 	
-	dh_movefiles ] . $Config{prefix} . q[
+	dh_movefiles $Config{prefix}
 
 	touch install-stamp
 
@@ -622,7 +630,7 @@ use constant DEB_RULES_BUILD_NOXS_CONTENT   => sub {
     my $inst_changes = "\t-dh_installchangelogs" .
                     ($changes ? " $changes" : '');
 
-                                    return q[#!/usr/bin/make -f
+                                    return qq[#!/usr/bin/make -f
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
@@ -630,14 +638,14 @@ use constant DEB_RULES_BUILD_NOXS_CONTENT   => sub {
 # always return the default without waiting for user input.
 export PERL_MM_USE_DEFAULT=1
 
-PACKAGE=$(shell dh_listpackages)
+PACKAGE=\$(shell dh_listpackages)
 
 ifndef PERL
-PERL = /usr/bin/perl
+PERL = $^X
 endif
 
 BUILD = ./Build
-TMP	=$(CURDIR)/debian/tmp
+TMP	=\$(CURDIR)/debian/tmp
 
 
 build: build-stamp
@@ -659,14 +667,14 @@ install-stamp: build-stamp
 	dh_testroot
 	dh_clean -d -k
 
-	$(PERL) $(BUILD) install destdir=$(TMP)
-	-find . -type f | grep '/perllocal.pod$$' | xargs rm -f
+	\$(PERL) \$(BUILD) install destdir=\$(TMP)
+	-find . -type f | grep '/perllocal.pod\$\$' | xargs rm -f
 
 	# due to a bug in M::B, the .packlist file is written to
 	# the wrong directory, causing file conflicts:
 	# http://rt.cpan.org/Ticket/Display.html?id=18162
 	# remove it for now
-	-find . -type f | grep '/.packlist$$' | xargs rm -f
+	-find . -type f | grep '/.packlist\$\$' | xargs rm -f
 	
 	dh_movefiles ] . $Config{prefix} . q[
 
@@ -717,7 +725,7 @@ use constant DEB_RULES_BUILD_XS_CONTENT   => sub {
     my $inst_changes = "\t-dh_installchangelogs" .
                     ($changes ? " $changes" : '');
 
-                                    return q[#!/usr/bin/make -f
+                                    return qq[#!/usr/bin/make -f
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
@@ -725,13 +733,13 @@ use constant DEB_RULES_BUILD_XS_CONTENT   => sub {
 # always return the default without waiting for user input.
 export PERL_MM_USE_DEFAULT=1
 
-PACKAGE=$(shell dh_listpackages)
+PACKAGE=\$(shell dh_listpackages)
 
 ifndef PERL
-PERL = /usr/bin/perl
+PERL = $^X
 endif
 
-TMP	=$(CURDIR)/debian/tmp
+TMP	=\$(CURDIR)/debian/tmp
 
 BUILD = ./Build
 
@@ -760,14 +768,14 @@ install-stamp:
 	dh_clean -d -k
 
 	# Add here commands to install the package into debian/tmp.
-	$(PERL) $(BUILD) install destdir=$(TMP)
-	-find . -type f | grep '/perllocal.pod$$' | xargs rm -f
+	\$(PERL) \$(BUILD) install destdir=\$(TMP)
+	-find . -type f | grep '/perllocal.pod\$\$' | xargs rm -f
 
 	# due to a bug in M::B, the .packlist file is written to
 	# the wrong directory, causing file conflicts:
 	# http://rt.cpan.org/Ticket/Display.html?id=18162
 	# remove it for now
-	-find . -type f | grep '/.packlist$$' | xargs rm -f
+	-find . -type f | grep '/.packlist\$\$' | xargs rm -f
 
 	dh_movefiles ] . $Config{prefix} . q[
 

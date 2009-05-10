@@ -1,0 +1,141 @@
+From 8838ab5566903221a097b7777785f2cb31f1ce2f Mon Sep 17 00:00:00 2001
+From: Josh ben Jore <jbenjore@whitepages.com>
+Date: Sun, 10 May 2009 00:13:47 -0700
+Subject: [PATCH] Strip %ENV of perl-special variables
+
+---
+ lib/CPANPLUS/Dist/Deb.pm           |   37 ++++++++++++++++++---------
+ lib/CPANPLUS/Dist/Deb/Constants.pm |   48 ++++++++++++++++++++++++++++++++++++
+ 2 files changed, 73 insertions(+), 12 deletions(-)
+
+diff --git a/lib/CPANPLUS/Dist/Deb.pm b/lib/CPANPLUS/Dist/Deb.pm
+index 6897c90..8d59f91 100755
+--- a/lib/CPANPLUS/Dist/Deb.pm
++++ b/lib/CPANPLUS/Dist/Deb.pm
+@@ -896,11 +896,11 @@ sub create {
+         }
+ 
+         my $buffer;
+-        unless( scalar run(
+-                    command => [$prog, qw|-rfakeroot -uc -us -d|,
+-                                DEB_DPKG_SOURCE_IGNORE],
+-                    verbose => $verbose,
+-                    buffer  => \$buffer )
++        unless( scalar env_safe_run(
++                                    command => [$prog, qw|-rfakeroot -uc -us -d|,
++                                                DEB_DPKG_SOURCE_IGNORE],
++                                    verbose => $verbose,
++                                    buffer  => \$buffer )
+         ) {
+             error( loc( "Failed to create debian package for '%1': '%2'",
+                         $self->module, $buffer ) );
+@@ -1027,9 +1027,9 @@ sub install {
+     unshift @cmd, $sudo if $sudo;
+ 
+     my $buffer;
+-    unless( scalar run( command => \@cmd,
+-                        verbose => $verbose,
+-                        buffer  => \$buffer )
++    unless( scalar env_safe_run( command => \@cmd,
++                                 verbose => $verbose,
++                                 buffer  => \$buffer )
+     ) {
+         error( loc( "Unable to install '%1': %2",
+                     $dist->status->package, $buffer ) );
+@@ -1083,10 +1083,10 @@ sub uninstall {
+     unshift @cmd, $sudo if $sudo;
+ 
+     my $buffer;
+-    unless( scalar run( command => \@cmd,
+-                        verbose => $verbose,
+-                        buffer  => \$buffer )
+-    ) {
++    unless( scalar env_safe_run( command => \@cmd,
++                                 verbose => $verbose,
++                                 buffer  => \$buffer )
++          ) {
+         error( loc( "Unable to uninstall '%1': %2",
+                     $dist->status->package, $buffer ) );
+         return $dist->status->uninstalled(0);
+@@ -1183,6 +1183,19 @@ It returns the location of the metafile on success, and false on failure.
+     }
+ }
+ 
++# Protects dpkg-* programs using /usr/bin/perl from things like our non-system
++# PERL5LIB and such. I found that when building for 5.10.0, environment between
++# the two interpreters would leak and I'd break the core dpkg tool set.
++#
++sub env_safe_run {
++    local %ENV =
++        map {; $_ => $ENV{$_} }
++        grep { ! POISONOUS_ENV->( $_ ) }
++        keys %ENV;
++
++    return run( @_ );
++}
++
+ 
+ 1;
+ 
+diff --git a/lib/CPANPLUS/Dist/Deb/Constants.pm b/lib/CPANPLUS/Dist/Deb/Constants.pm
+index a66174f..f7d4577 100755
+--- a/lib/CPANPLUS/Dist/Deb/Constants.pm
++++ b/lib/CPANPLUS/Dist/Deb/Constants.pm
+@@ -30,6 +30,54 @@ use constant DEB_BASE_DIR       => sub { my $conf = shift or return;
+                                         );
+                                 };      
+ 
++# This list is constructed with `perldoc -t perlrun | perl -lne 'print
++# for /\b(PERL\w+)/g'|sort|uniq`. This exists so environment variables
++# like PERL5LIB for *your* perl won't leak through to the system perl.
++#
++# I found when I was building for my non-threaded
++# /opt/perl-5.10.0/bin/perl, it needed dpkg services but they're
++# written against the threaded 5.8 /usr/bin/perl it triggered problems
++# because the two perls would start to see each other.
++#
++# Bummer. So now run() calls for non-system perl try to strip out
++# environment that might inappropriately tie the two together. I think
++# it's ok to keep your current environment if you're just building for
++# the system perl.
++#
++# Further, this list isn't just as dumb as "anything that starts with
++# PERL" because that excludes PERL_MM_* but I desire to set those.
++use constant POISONOUS_ENV_NAMES => { IS_SYSTEM_PERL
++                                      ? ()
++                                      : (
++                                         map {; $_ => undef }
++                                         qw(
++                                               PERL5DB
++                                               PERL5DB_THREADED
++                                               PERL5LIB
++                                               PERL5OPT
++                                               PERL5SHELL
++                                               PERLDB_OPTS
++                                               PERLIO
++                                               PERLIO_DEBUG
++                                               PERLLIB
++                                               PERLSHR
++                                               PERL_ALLOW_NON_IFS_LSP
++                                               PERL_API
++                                               PERL_API_
++                                               PERL_DEBUG_MSTATS
++                                               PERL_DESTRUCT_LEVEL
++                                               PERL_DL_NONLAZY
++                                               PERL_ENCODING
++                                               PERL_ENV_TABLES
++                                               PERL_HASH_SEED
++                                               PERL_HASH_SEED_DEBUG
++                                               PERL_ROOT
++                                               PERL_SIGNALS
++                                               PERL_UNICODE
++                                          ) ) };
++
++use constant POISONOUS_ENV => sub { exists POISONOUS_ENV_NAMES->{ $_[0] } };
++
+ use constant DEB_DEBIAN_DIR     => sub { File::Spec->catfile( @_,
+                                             'debian' )
+                                 };
+-- 
+1.6.0.4
+

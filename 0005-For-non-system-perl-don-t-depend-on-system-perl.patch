@@ -1,0 +1,27 @@
+From 82835f77a4aafbfac6f87dd3c6b3f61e757d93dd Mon Sep 17 00:00:00 2001
+From: Josh ben Jore <jbenjore@whitepages.com>
+Date: Sat, 9 May 2009 22:16:41 -0700
+Subject: [PATCH] For non-system perl, don't depend on system perl
+
+---
+ lib/CPANPLUS/Dist/Deb/Constants.pm |    4 +++-
+ 1 files changed, 3 insertions(+), 1 deletions(-)
+
+diff --git a/lib/CPANPLUS/Dist/Deb/Constants.pm b/lib/CPANPLUS/Dist/Deb/Constants.pm
+index 5679d09..51ecdd9 100755
+--- a/lib/CPANPLUS/Dist/Deb/Constants.pm
++++ b/lib/CPANPLUS/Dist/Deb/Constants.pm
+@@ -260,7 +260,9 @@ use constant DEB_DEBHELPER      => 'debhelper (>= 4.0.2)';
+ use constant DEB_THIS_PERL_DEPENDS
+                                 => sub { use Config; 
+                                          "perl (>= $Config{version})" };
+-use constant DEB_PERL_DEPENDS   => '${perl:Depends}, ${misc:Depends}, ' .
++use constant DEB_PERL_DEPENDS   => join ', ',
++                                   ( IS_SYSTEM_PERL ? '${perl:Depends}' : () ),
++                                   '${misc:Depends}',
+                                     DEB_THIS_PERL_DEPENDS->();
+ 
+                                          
+-- 
+1.6.0.4
+

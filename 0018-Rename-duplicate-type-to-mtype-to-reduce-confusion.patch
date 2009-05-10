@@ -1,0 +1,27 @@
+From 713e66942e82f82b8983f9ea7d54d7970534261b Mon Sep 17 00:00:00 2001
+From: Josh ben Jore <jbenjore@whitepages.com>
+Date: Sun, 10 May 2009 00:36:44 -0700
+Subject: [PATCH] Rename duplicate $type to $mtype to reduce confusion
+
+---
+ t/02_debs.t |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/t/02_debs.t b/t/02_debs.t
+index e54b4f3..0d58da9 100755
+--- a/t/02_debs.t
++++ b/t/02_debs.t
+@@ -181,8 +181,8 @@ for my $test ( @TESTS ) {
+     if ( $DO_META ) {
+                     ok( $DO_META,           "Testing meta files" );
+             
+-                    for my $type (qw[sources packages]) {
+-                        my $loc = $dist->write_meta_files( type => $type );
++        for my $mtype (qw[sources packages]) {
++            my $loc = $dist->write_meta_files( type => $mtype );
+             
+                         ok( $loc,           "File '$loc' written" );
+                         ok( -e $loc,        "   File exists" );
+-- 
+1.6.0.4
+

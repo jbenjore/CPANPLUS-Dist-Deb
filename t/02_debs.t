@@ -37,6 +37,11 @@ if( @ARGV ) {
             @BUILDERS;
 }
 
+local %ENV = %ENV;
+delete @ENV{qw/
+  PERL_MM_OPT MODULEBUILDRC
+/};
+
 ### create a debian dist using EU::MM and no XS files
 for my $test ( @TESTS ) {
     my ( $builder, $type ) = @$test;

@@ -260,7 +260,9 @@ use constant DEB_DEBHELPER      => 'debhelper (>= 4.0.2)';
 use constant DEB_THIS_PERL_DEPENDS
                                 => sub { use Config; 
                                          "perl (>= $Config{version})" };
-use constant DEB_PERL_DEPENDS   => '${perl:Depends}, ${misc:Depends}, ' .
+use constant DEB_PERL_DEPENDS   => join ', ',
+                                   ( IS_SYSTEM_PERL ? '${perl:Depends}' : () ),
+                                   '${misc:Depends}',
                                     DEB_THIS_PERL_DEPENDS->();
 
                                          

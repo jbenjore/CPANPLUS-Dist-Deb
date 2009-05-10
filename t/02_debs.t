@@ -181,8 +181,8 @@ for my $test ( @TESTS ) {
     if ( $DO_META ) {
                     ok( $DO_META,           "Testing meta files" );
             
-                    for my $type (qw[sources packages]) {
-                        my $loc = $dist->write_meta_files( type => $type );
+        for my $mtype (qw[sources packages]) {
+            my $loc = $dist->write_meta_files( type => $mtype );
             
                         ok( $loc,           "File '$loc' written" );
                         ok( -e $loc,        "   File exists" );

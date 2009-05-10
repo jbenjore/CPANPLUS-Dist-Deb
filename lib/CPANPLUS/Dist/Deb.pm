@@ -583,7 +583,7 @@ sub prepare {
                                 ### and we shouldn't list the same
                                 ### prereq twice. Note that 2 modules
                                 ### may be in 1 package
-                                !$_->[0]->package_is_perl_core and
+                                !$_->[0]->module_is_supplied_with_perl_core and
                                 !$seen{ DEB_PACKAGE_NAME->( $_->[0] ) }++
                             } @depends;
 

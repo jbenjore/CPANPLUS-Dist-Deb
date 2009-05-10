@@ -106,11 +106,11 @@ for my $test ( @TESTS ) {
                 
                 ok( $out,                   "   Deb --contents retrieved" );
 
-                for my $entry ( @$need ) {
+                for my $entry ( sort @$need ) {
                     my $re = qr/.$entry$/m;
                     like( $out, $re,        "       Contains $entry" );
                 }
-                for my $entry ( @$omit ) {
+                for my $entry ( sort @$omit ) {
                     my $re = qr/$entry$/m;
                     unlike( $out, $re,      "       Doesn't contain $entry" );
                 }
@@ -131,14 +131,14 @@ for my $test ( @TESTS ) {
                 ok( $out,                   "       Deb files retrieved" );
             
                 ### check out if all got installed ok
-                for my $entry ( @$need ) {
+                for my $entry ( sort @$need ) {
                     ok( -e $entry,          "       File $entry installed" );                
                 }
 
                 ok( $dist->uninstall,       "   Dist uninstalled" );
                 
                 ### check out if all got removed ok
-                for my $entry ( @$need ) {
+                for my $entry ( sort @$need ) {
                     ok( !-e $entry,         "       File $entry uninstalled");                
                 }
                 
@@ -148,7 +148,7 @@ for my $test ( @TESTS ) {
                 ok( $files,                 "   Files for this package" );
                 is( scalar(@$files), 5,     "       All Files found" );
                 
-                for ( @$files ) {
+                for ( sort @$files ) {
                     ok( -e $_,              "       File '$_' exists" );
                     1 while unlink $_;
                     ok( !-e $_,             "       File '$_' removed" );

@@ -1,4 +1,25 @@
 Changes for 0.11_01
+*   3be34f559fe2c54f27c0e57f16d9f8297c65ecf0 Remove jjore's non-/usr/bin/perl patch files
+*   91df126ef5d33f6b7d818ca37e940d53dd97cdfe Merge jjore's non-/usr/bin/perl work
+*   ff0e477077402cec0d12707827d92cb09879c9c8 Clean build detritus
+*   569b123c4a052ed70226e5142a87d856e3597ab1 whitepaces fixes
+*   f39bb1c4f59d9dc9576691f76478346d49454f04 Rename duplicate $type to $mtype to reduce confusion
+*   511aac7e943a41325d60d09cbfa52436a09ebe95 Skip fatal tests
+*   a99930dde0508d37b5cfea9c412ff3b89cefdf19 Test files in a predictable order for easier test comparison
+*   041404d285825971871aeb631c6abd20c5734e46 Rename $type & $dir to $builder & $type
+*   b575a0ebb80d7e8d4455ea52c30c8ef123d3457c Run EU::MM/MB, xs/non-XS tests in predictable order
+*   a1809510361c43bbc5564e8b82be28b89c2da690 Remove .deb work product
+*   69423f439a976ec0a2228f2d61fa560a77566093 Strip %ENV of perl-special variables
+*   2aa8e9f6012f624cf09a0afa338adfbbae518f82 Only "provide" system packages when building for system perl
+*   4cd67578a95a1cdad07051f1b44da5b0447aefd1 Rename %seen to %seen_prereq
+*   17aec1c5f0b83b953fc198bbb812001d054b5f21 Core modules depend only on perl
+*   e5822de7a8e142ecea73cd409ad52d215a089e31 Depend on the $^X's package, not just "perl"
+*   eb5a9d0e90cb07e9d706bc6d55ab7b09b1a9bc1d Non-system perl's core modules may need replacing
+*   6ffc24a825024593389dc1a9da7aaf4137570db9 Add IS_SYSTEM_PERL predicate
+*   b7adaf284ced6c9f6e910ac205d18ed8c9b63018 For non-system perl, don't depend on system perl
+*   bfbaf26049ddd827b856da09267bcd931cb4fa95 Core modules don't depend on anything bug core
+*   acdfe40594796fa59d69133f4e556ce4a5a0c748 Use -Dman3ext
+*   e7b69546b951e6a3f12880e8d653d7613bc53cc4 Use -Dprefix
 *   Change '_' in versions to '.' -- removing '_' entirely breaks Debian
     version comparisons.
 *   Use $^X in generated debian/rules file instead of hardcoding /usr/bin/perl.

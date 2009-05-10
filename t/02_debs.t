@@ -146,6 +146,10 @@ for my $test ( @TESTS ) {
            
             {   my $files = $dist->status->files;
                 ok( $files,                 "   Files for this package" );
+
+      SKIP: {
+            skip( 'Missing files', 5 ) if ! $files;
+
                 is( scalar(@$files), 5,     "       All Files found" );
                 
                 for ( sort @$files ) {
@@ -154,6 +158,7 @@ for my $test ( @TESTS ) {
                     ok( !-e $_,             "       File '$_' removed" );
                 }
             }
+    }
             
             ### check out the naming
             like( $deb, qr/$DEBMOD/,        "   Deb is called '$DEBMOD'" );

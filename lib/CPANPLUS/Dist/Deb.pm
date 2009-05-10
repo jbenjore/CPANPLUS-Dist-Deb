@@ -566,30 +566,37 @@ sub prepare {
         ### >= VERSION if the prereqs were stated with requiring a certain
         ### version.. otherwise we leave it empty
         my %seen;
-        my $prereqs         = join ', ', map {
-                                ### do we need a specific version?
-                                my $ver = $_->[1] 
-                                            ? ' (>= ' . $_->[1] . ')' 
-                                            : '';
-                                
-                                ### standard lib
-                                my $str = DEB_PACKAGE_NAME->($_->[0]) . $ver;
+        my $prereqs;
+        if ( $self->module_is_supplied_with_perl_core ) {
+            $prereqs = DEB_THIS_PERL_DEPENDS->();
+        } else {
+            $prereqs =
+                join ', ',
+                map {
+                    ### do we need a specific version?
+                    my $ver = $_->[1]
+                                ? ' (>= ' . $_->[1] . ')'
+                                : '';
 
-                                ### our lib, if it has a prefix
-                                if( $prefix ) {
-                                    $str .= ' | ' . DEB_PACKAGE_NAME->(
-                                            $_->[0], $prefix) . $ver;
-                                }
-                                
-                                $str;
-                            } grep {
-                                ### shouldn't be a core module
-                                ### and we shouldn't list the same
-                                ### prereq twice. Note that 2 modules
-                                ### may be in 1 package
-                                !$_->[0]->module_is_supplied_with_perl_core and
-                                !$seen{ DEB_PACKAGE_NAME->( $_->[0] ) }++
-                            } @depends;
+                    ### standard lib
+                    my $str = DEB_PACKAGE_NAME->($_->[0]) . $ver;
+
+                    ### our lib, if it has a prefix
+                    if( $prefix ) {
+                        $str .= ' | ' . DEB_PACKAGE_NAME->(
+                                $_->[0], $prefix) . $ver;
+                    }
+
+                    $str;
+                } grep {
+                    ### shouldn't be a core module
+                    ### and we shouldn't list the same
+                    ### prereq twice. Note that 2 modules
+                    ### may be in 1 package
+                    !$_->[0]->module_is_supplied_with_perl_core and
+                    !$seen{ DEB_PACKAGE_NAME->( $_->[0] ) }++
+                } @depends;
+        }
 
         ### always put debhelper in build-depends ###
         my $build_depends   =  $debhelper;

@@ -565,7 +565,7 @@ sub prepare {
         ### '${prefix}libfoo-perl' if we do have a prefix. We only add the
         ### >= VERSION if the prereqs were stated with requiring a certain
         ### version.. otherwise we leave it empty
-        my %seen;
+        my %seen_prereq;
         my $prereqs;
         if ( $self->module_is_supplied_with_perl_core ) {
             $prereqs = DEB_THIS_PERL_DEPENDS->();
@@ -594,7 +594,7 @@ sub prepare {
                     ### prereq twice. Note that 2 modules
                     ### may be in 1 package
                     !$_->[0]->module_is_supplied_with_perl_core and
-                    !$seen{ DEB_PACKAGE_NAME->( $_->[0] ) }++
+                    !$seen_prereq{ DEB_PACKAGE_NAME->( $_->[0] ) }++
                 } @depends;
         }
 

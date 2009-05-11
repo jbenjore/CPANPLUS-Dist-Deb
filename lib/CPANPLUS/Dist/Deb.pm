@@ -568,7 +568,7 @@ sub prepare {
         my %seen_prereq;
         my $prereqs;
         if ( $self->module_is_supplied_with_perl_core ) {
-            $prereqs = DEB_THIS_PERL_DEPENDS->();
+            $prereqs = DEB_THIS_PERL_DEPENDS;
         } else {
             $prereqs =
                 join ', ',

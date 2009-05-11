@@ -1,3 +1,12 @@
+Changes for 0.12        Fri May  8 12:35:57 2009
+================================================
+*   We were using an internal deprecated module from CPANPLUS 
+    directly, which has been removed in the latest stable release.
+    Since the module provided no needed functionality, the use
+    statement has simple been removed.
+    Users of CPANPLUS 0.85_01 and later should upgrade to this
+    release.
+
 Changes for 0.11_01
 *   3be34f559fe2c54f27c0e57f16d9f8297c65ecf0 Remove jjore's non-/usr/bin/perl patch files
 *   91df126ef5d33f6b7d818ca37e940d53dd97cdfe Merge jjore's non-/usr/bin/perl work

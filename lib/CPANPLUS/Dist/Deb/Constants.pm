@@ -4,6 +4,7 @@ use strict;
 use CPANPLUS::Error;
 use CPANPLUS::Internals::Constants;
 
+use Config                      qw[%Config];
 use Cwd                         qw[abs_path];
 use IPC::Cmd                    qw[can_run];
 use File::Spec;
@@ -312,32 +313,32 @@ use constant DEB_LICENSE_ARTISTIC
 use constant DEB_URGENCY        => 'urgency=low';
 use constant DEB_DEBHELPER      => 'debhelper (>= 4.0.2)';
 
-### since this will be installed in a versioned dir, we depend on at least
-### this version of perl (all older perls paths will be included automatically
-### by perl, unless you explicilty undefined 'inc_version_list' as a config
-### argument
-use constant DEB_THIS_PERL_DEPENDS
-                                => IS_SYSTEM_PERL
-                                   ? sub { use Config;
-                                         "perl (>= $Config{version})" }
-                                   : do {
+use constant DEB_CORE_PACKAGE => IS_SYSTEM_PERL
+                                 ? 'perl'
+                                 : do {
                                        my $pid = open my($fh), '-|', 'dpkg', '-S', abs_path( $^X );
                                        my ( $pkg ) = <$fh>;
                                        close $fh;
                                        waitpid $pid, 0;
                                        if ( defined $pkg && $pkg =~ /^(\S+):/ ) {
                                            $pkg = $1;
-                                           sub { "$pkg (>= $Config{version})" };
+                                       } else {
+                                           die "Can't find debian package for $^X";
                                        }
-                                       else {
-                                           warn "Can't find debian package for $^X";
-                                           sub { "" };
-                                       }
-                                     };
+
+                                       $pkg;
+                                 };
+
+### since this will be installed in a versioned dir, we depend on at least
+### this version of perl (all older perls paths will be included automatically
+### by perl, unless you explicilty undefined 'inc_version_list' as a config
+### argument
+use constant DEB_THIS_PERL_DEPENDS => DEB_CORE_PACKAGE . " (>= $Config{version})";
+
 use constant DEB_PERL_DEPENDS   => join ', ',
                                    ( IS_SYSTEM_PERL ? '${perl:Depends}' : () ),
                                    '${misc:Depends}',
-                                    DEB_THIS_PERL_DEPENDS->();
+                                    DEB_THIS_PERL_DEPENDS;
 
                                          
 use constant DEB_STANDARDS_VERSION
@@ -350,8 +351,9 @@ use constant DEB_STANDARD_COPYRIGHT_PERL =>
     "licenses can be found at:\n\t" .
     DEB_LICENSE_GPL . "\n\t" . DEB_LICENSE_ARTISTIC;
 
-use constant DEB_REPLACE_PERL_CORE
-                                =>"perl-modules, perl-base, perl";
+use constant DEB_REPLACE_PERL_CORE => IS_SYSTEM_PERL
+                                      ? 'perl-modules, perl-base, perl'
+                                      : DEB_CORE_PACKAGE;
 
 
 use constant DEB_FIND_DOCS      => sub { my $dir = shift or return;

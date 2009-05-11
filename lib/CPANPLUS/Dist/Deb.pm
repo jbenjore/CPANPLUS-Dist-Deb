@@ -642,7 +642,7 @@ EOF
             ### so this module is also in perl core, add a rule telling the
             ### .deb that it's ok to replace stuff from those packages.
             push @replaces, DEB_REPLACE_PERL_CORE;
-            push @replaces, DEB_PACKAGE_NAME->($self) if $prefix;
+            push @replaces, DEB_PACKAGE_NAME->($self, $prefix) if $prefix;
         }
 
         if ( @replaces ) {
